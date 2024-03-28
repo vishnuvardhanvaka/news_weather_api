@@ -97,7 +97,7 @@ def getHeadlines():
         'title':article_headline,
         'article_link':article_link,
         'article_from':article_from,
-        'img_url':img,
+        'imageUrl':img,
         'time_text':time,
         'datetime':article_datetime
     }
