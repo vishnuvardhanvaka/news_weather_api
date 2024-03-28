@@ -1,7 +1,11 @@
+ffmpeg
 fastapi
+fastapi-socketio
 uvicorn
+fastapi
 pyngrok
 ffmpeg-python
+nest-asyncio
 python-dotenv
 requests
 beautifulsoup4
