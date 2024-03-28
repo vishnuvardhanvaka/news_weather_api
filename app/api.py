@@ -1,6 +1,4 @@
 from fastapi import FastAPI,Form
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
 from typing import Optional
 import requests
 from bs4 import BeautifulSoup
@@ -14,7 +12,7 @@ app = FastAPI()
 async def read_root():
     return {"message": "Welcome to this fantastic app!"}
 
-def getWeather(city):
+def getWeatherData(city):
   url = "https://www.google.com/search?q="+city+"-weather"
   html = requests.get(url).content
   soup = BeautifulSoup(html, 'html.parser')
@@ -46,7 +44,7 @@ def getWeather(city):
   return weather_data
 
 # city = "Itavaram"
-# weather_data=getWeather(city)
+# weather_data=getWeatherData(city)
 # print(weather_data)
 
 
@@ -104,7 +102,6 @@ async def getLatestHeadlines():
 
 @app.post('/getWeather/')
 async def getWeather(city: Optional[str] = Form('Ithavaram')):
-  latest_city_weahter=getWeather(city)
-  json_encoded=jsonable_encoder(latest_city_weahter)
-  return JSONResponse(content=json_encoded)
+  latest_city_weahter=getWeatherData(city)
+  return {'success':True,'weatherData':latest_city_weahter}
 
