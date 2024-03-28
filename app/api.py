@@ -12,11 +12,6 @@ app = FastAPI()
 async def read_root():
     return {"message": "Welcome to this fantastic app!"}
 
-# importing the library
-import requests
-from bs4 import BeautifulSoup
-import math
-
 def getWeather(city):
   url = "https://www.google.com/search?q="+city+"-weather"
   html = requests.get(url).content
@@ -108,5 +103,5 @@ async def getLatestHeadlines():
 @app.post('/getWeather/')
 async def getWeather(city: Optional[str] = Form('Ithavaram')):
   latest_city_weahter=getWeather(city)
-  return {'success':True,'weatherData':'hi'}
+  return {'success':True,'weatherData':latest_city_weahter}
 
