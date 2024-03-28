@@ -1,28 +1,66 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,Form
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+import math
+
+
 app = FastAPI()
 
 @app.get("/", tags=["Root"])
 async def read_root():
     return {"message": "Welcome to this fantastic app!"}
 
+# importing the library
+import requests
+from bs4 import BeautifulSoup
+import math
 
-# Send a GET request to the URL
-cnnurl = "https://edition.cnn.com/"
-url='https://news.google.com/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRFZxYUdjU0JXVnVMVWRDR2dKSlRpZ0FQAQ?hl=en-IN&gl=IN&ceid=IN%3Aen'
-root_url='https://news.google.com'
-response = requests.get(url)
+def getWeather(city):
+  url = "https://www.google.com/search?q="+city+"-weather"
+  html = requests.get(url).content
+  soup = BeautifulSoup(html, 'html.parser')
+  Ftemp = soup.find('div', attrs={'class': 'BNeawe iBp4i AP7Wnd'}).text
+  temperature_fahrenheit = float(Ftemp.split('°')[0])
+  Ctemp=f'{math.ceil(((float(temperature_fahrenheit) - 32) * 5 / 9))}'+'°'+'C'
+  str = soup.find('div', attrs={'class': 'BNeawe tAd8D AP7Wnd'}).text
+  cityName = soup.find('span', attrs={'class': 'BNeawe tAd8D AP7Wnd'}).text.split(',')[0]
+  data = str.split('\n')
+  time = data[0]
+  sky = data[1]
+  listdiv = soup.findAll('div', attrs={'class': 'BNeawe s3v9rd AP7Wnd'})
+  strd = listdiv[5].text
+  pos = strd.find('Wind')
+  other_data = strd[pos:]
+#   print("City Name is", cityName)
+#   print("Temperature is", Ctemp)
+#   print("Time: ", time)
+#   print("Sky Description: ", sky)
+#   print(other_data)
 
-# Parse the HTML content
-soup = BeautifulSoup(response.text, "html.parser")
+  weather_data={
+      'cityName':cityName,
+      'temperature':Ctemp,
+      'Time':time,
+      'skyDesc':sky,
+      'other_data':other_data
+  }
+  return weather_data
+
+# city = "Itavaram"
+# weather_data=getWeather(city)
+# print(weather_data)
+
+
 
 def getHeadlines():
+  url='https://news.google.com/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRFZxYUdjU0JXVnVMVWRDR2dKSlRpZ0FQAQ?hl=en-IN&gl=IN&ceid=IN%3Aen'
+  root_url='https://news.google.com'
+  response = requests.get(url)
+  soup = BeautifulSoup(response.text, "html.parser")
   headlines_data=[]
   headline_boxes=soup.find_all(class_='W8yrY')
-  print(len(headline_boxes))
-
+#   print(len(headline_boxes))
   for headline_box in headline_boxes:
     article=headline_box.find(class_='IBr9hb')
     figure=article.find('figure')
@@ -53,9 +91,7 @@ def getHeadlines():
     }
     headlines_data.append(headline)
     # print('----------------------')
-
   sorted_headlines = sorted(headlines_data, key=lambda x: x['datetime'],reverse=True)
-
   return sorted_headlines
 
 # latest_news_headlines=getHeadlines()
@@ -68,4 +104,8 @@ async def getLatestHeadlines():
   latest_news_headlines=getHeadlines()
   return {'success':True,'headlines':latest_news_headlines}
 
+@app.get('/getWeather')
+async def getWeather(city: str = Form()):
+  latest_city_weahter=getWeather(city)
+  return {'success':True,'weatherData':latest_city_weahter}
 
