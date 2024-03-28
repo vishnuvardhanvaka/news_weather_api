@@ -1,4 +1,6 @@
 from fastapi import FastAPI,Form
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from typing import Optional
 import requests
 from bs4 import BeautifulSoup
@@ -102,6 +104,6 @@ async def getLatestHeadlines():
 
 @app.post('/getWeather/')
 async def getWeather(city: Optional[str] = Form('Ithavaram')):
-  latest_city_weahter=getWeather(city)
+  latest_city_weahter=[getWeather(city)]
   return {'success':True,'weatherData':latest_city_weahter}
 
