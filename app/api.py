@@ -1,4 +1,5 @@
 from fastapi import FastAPI,Form
+from typing import Optional
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
@@ -105,7 +106,7 @@ async def getLatestHeadlines():
   return {'success':True,'headlines':latest_news_headlines}
 
 @app.get('/getWeather')
-async def getWeather(city: str = Form()):
+async def getWeather(city: Optional[str] = Form('Ithavaram')):
   latest_city_weahter=getWeather(city)
   return {'success':True,'weatherData':latest_city_weahter}
 
