@@ -1,17 +1,16 @@
-
-
 {
-    "devCommand": "uvicorn vercel:app.api --host 0.0.0.0 --port 3000",
-    "builds": [
+    "version":2,
+    "builds":[
         {
             "src":"/app/api.py",
-            "use": "@vercel/python"
+            "use":"@vercel/python"
         }
     ],
-    "routes": [
+    "routes":[
         {
-            "src": "/(.*)",
-            "dest": "app/api.py"
+            "src":"/(.*)",
+            "dest":"app/api.py"
         }
     ]
+
 }
