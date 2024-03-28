@@ -105,7 +105,7 @@ async def getLatestHeadlines():
   latest_news_headlines=getHeadlines()
   return {'success':True,'headlines':latest_news_headlines}
 
-@app.get('/getWeather/')
+@app.post('/getWeather/')
 async def getWeather(city: Optional[str] = Form('Ithavaram')):
   latest_city_weahter=getWeather(city)
   return {'success':True,'weatherData':latest_city_weahter}
