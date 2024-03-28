@@ -104,6 +104,7 @@ async def getLatestHeadlines():
 
 @app.post('/getWeather/')
 async def getWeather(city: Optional[str] = Form('Ithavaram')):
-  latest_city_weahter=[getWeather(city)]
-  return {'success':True,'weatherData':latest_city_weahter}
+  latest_city_weahter=getWeather(city)
+  json_encoded=jsonable_encoder(latest_city_weahter)
+  return JSONResponse(content=json_encoded)
 
