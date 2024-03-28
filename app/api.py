@@ -11,12 +11,7 @@ origins = [
     "http://localhost.tiangolo.com",
     "https://localhost.tiangolo.com",
     "http://localhost:3000",
-    "http://localhost:3000/",
-    "http://192.168.0.128:3000/",
-    "https://miraparentpal.com",
-    "https://www.miraparentpal.com",
-    'https://miraparentpal.vercel.app',
-    'https://inotes-gamma.vercel.app',
+    'https://v3infosphere.vercel.app',
     'https://ai-avatar-live-stream.vercel.app'
 ]
 
