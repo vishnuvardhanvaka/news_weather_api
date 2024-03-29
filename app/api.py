@@ -90,7 +90,7 @@ def getHeadlines():
     img='None'
     if figure:
       img=root_url+figure.find('img').get('src').split('=-')[0]
-      img=get_redirected_url(img)
+      # img=get_redirected_url(img)
     # print(img)
     article_link_container=article.find('a',class_='gPFEn')
     article_link=root_url+article_link_container.get('href')
