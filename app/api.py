@@ -64,6 +64,17 @@ def getWeatherData(city):
 # print(weather_data)
 
 
+def get_redirected_url(original_url):
+  try:
+      response = requests.head(original_url, allow_redirects=True)
+      if response.status_code == 200:
+          return response.url
+      else:
+          print(f"Failed to retrieve redirected URL for {original_url}. Status code: {response.status_code}")
+          return original_url
+  except Exception as e:
+      print(f"Error occurred while retrieving redirected URL for {original_url}: {str(e)}")
+      return original_url
 
 def getHeadlines():
   url='https://news.google.com/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRFZxYUdjU0JXVnVMVWRDR2dKSlRpZ0FQAQ?hl=en-IN&gl=IN&ceid=IN%3Aen'
@@ -79,6 +90,7 @@ def getHeadlines():
     img='None'
     if figure:
       img=root_url+figure.find('img').get('src').split('=-')[0]
+      img=get_redirected_url(img)
     # print(img)
     article_link_container=article.find('a',class_='gPFEn')
     article_link=root_url+article_link_container.get('href')
