@@ -28,6 +28,51 @@ app.add_middleware(
 async def read_root():
     return {"message": "Welcome to this fantastic app!"}
 
+
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Referer': 'https://www.google.com/'
+}
+
+def getMarketTrends(companies):
+  market_trends=[]
+  for company in companies:
+    url='https://www.tijorifinance.com/company/'+company
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, "html.parser")
+        page_title = soup.find(class_='page_title m-0 d-flex')
+        company_name = page_title.find('h1').text
+        market_cap = soup.find(class_='company_details_value').text
+        share = soup.find(class_='share_price')
+        share_positive = soup.find(class_='change positive')
+        share_negative = soup.find(class_='change negative')
+        if share_positive!=None:
+          change='positive'
+          percentage=share_positive.text.strip()
+          price=soup.find(class_='price').text.strip()
+        elif share_negative!=None:
+          change='negative'
+          percentage=share_negative.text.strip()
+          price=soup.find(class_='price').text.strip()
+        else:
+          change=None
+          percentage=None
+          price=None
+        company_data={
+            'company_name':company_name,
+            'change':change,
+            'percentage':percentage,
+            'price':price,
+            'market_cap':market_cap
+        }
+        # print(company_data)
+        market_trends.append(company_data)
+    else:
+        print("Failed to retrieve data. Status code:", response.status_code)
+  return market_trends
+
+
 def getWeatherData(city):
   url = "https://www.google.com/search?q="+city+"-weather"
   html = requests.get(url).content
@@ -133,3 +178,8 @@ async def getWeather(city: Optional[str] = Form('Ithavaram')):
   latest_city_weahter=getWeatherData(city)
   return {'success':True,'weatherData':latest_city_weahter}
 
+@app.get('/getMarketDetails')
+async def getMarketDetails():
+  companies=['tata-motors-limited','jio-financial-services-ltd']
+  market_trends=getMarketTrends(companies)
+  return {'success':True,'market_trends':market_trends}
