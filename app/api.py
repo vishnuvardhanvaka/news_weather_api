@@ -5,6 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import math
+import ast
 
 
 origins = [
@@ -178,7 +179,8 @@ async def getWeather(city: Optional[str] = Form('Ithavaram')):
   return {'success':True,'weatherData':latest_city_weahter}
 
 @app.post('/getMarketDetails/')
-async def getMarketDetails(companies: Optional[list] = ['TSLA','AMZN','AAPL','MSFT']):
+async def getMarketDetails(companies: Optional[str] =Form("['TSLA','AMZN','AAPL','MSFT']")):
   # companies=['TSLA','AMZN','AAPL','MSFT']
+  companies = ast.literal_eval(companies)
   market_trends=getMarketTrends(companies)
   return {'success':True,'market_trends':market_trends}
