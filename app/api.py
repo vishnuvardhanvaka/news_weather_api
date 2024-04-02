@@ -45,19 +45,19 @@ def getMarketTrends(companies):
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, "html.parser")
-        company_name = soup.find('div', attrs={'class': 'PZPZlf ssJ7i B5dxMb'}).text
-        last_trade_value = soup.find('span', attrs={'class': 'IsqQVc NprOob wT3VGc'}).text
-        absolute_change_value = soup.find('span', attrs={'jsname': 'qRSVye'}).text
+        company_name = soup.find('div', attrs={'class': 'PZPZlf ssJ7i B5dxMb'}).text.strip()
+        last_trade_value = soup.find('span', attrs={'class': 'IsqQVc NprOob wT3VGc'}).text.strip()
+        absolute_change_value = soup.find('span', attrs={'jsname': 'qRSVye'}).text.strip()
         change = soup.find('span', attrs={'class': 'jBBUv'}).get('aria-label')
         if 'Down by ' in change:
           sign='negative'
-          percentage=change.split('Down by ')[1]
+          percentage=change.split('Down by ')[1].strip()
         elif 'Up by ' in change:
           sign='positive'
-          percentage=change.split('Up by ')[1]
+          percentage=change.split('Up by ')[1].strip()
         else:
           sign=''
-          percentage=0
+          percentage='0'
 
         company_data={
             'company_name':company_name,
