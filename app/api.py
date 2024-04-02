@@ -178,7 +178,7 @@ async def getWeather(city: Optional[str] = Form('Ithavaram')):
   return {'success':True,'weatherData':latest_city_weahter}
 
 @app.get('/getMarketDetails')
-async def getMarketDetails():
-  companies=['TSLA','AMZN','AAPL','MSFT']
+async def getMarketDetails(companies: Optional[list] = Form(['TSLA','AMZN','AAPL','MSFT'])):
+  # companies=['TSLA','AMZN','AAPL','MSFT']
   market_trends=getMarketTrends(companies)
   return {'success':True,'market_trends':market_trends}
