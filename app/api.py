@@ -37,36 +37,35 @@ headers = {
 def getMarketTrends(companies):
   market_trends=[]
   for company in companies:
-    url='https://www.tijorifinance.com/company/'+company
+    url = f"https://www.google.com/search?q={company} shares price today"
+    # print(url)
+    # html = requests.get(url).content
+    # soup = BeautifulSoup(html, 'html.parser')
+    # url='https://www.google.com/finance/quote/'+company+':NASDAQ'
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, "html.parser")
-        page_title = soup.find(class_='page_title m-0 d-flex')
-        company_name = page_title.find('h1').text
-        market_cap = soup.find(class_='company_details_value').text
-        share = soup.find(class_='share_price')
-        share_positive = soup.find(class_='change positive')
-        share_negative = soup.find(class_='change negative')
-        if share_positive!=None:
-          change='positive'
-          percentage=share_positive.text.strip()
-          price=soup.find(class_='price').text.strip()
-        elif share_negative!=None:
-          change='negative'
-          percentage=share_negative.text.strip()
-          price=soup.find(class_='price').text.strip()
+        company_name = soup.find('div', attrs={'class': 'PZPZlf ssJ7i B5dxMb'}).text
+        last_trade_value = soup.find('span', attrs={'class': 'IsqQVc NprOob wT3VGc'}).text
+        absolute_change_value = soup.find('span', attrs={'jsname': 'qRSVye'}).text
+        change = soup.find('span', attrs={'class': 'jBBUv'}).get('aria-label')
+        if 'Down by ' in change:
+          sign='negative'
+          percentage=change.split('Down by ')[1]
+        elif 'Up by ' in change:
+          sign='positive'
+          percentage=change.split('Up by ')[1]
         else:
-          change=None
-          percentage=None
-          price=None
+          sign=''
+          percentage=0
+
         company_data={
             'company_name':company_name,
-            'change':change,
+            'last_trade_value':last_trade_value,
+            'sign':sign,
             'percentage':percentage,
-            'price':price,
-            'market_cap':market_cap
+            'absolute_change_value':absolute_change_value
         }
-        # print(company_data)
         market_trends.append(company_data)
     else:
         print("Failed to retrieve data. Status code:", response.status_code)
@@ -180,6 +179,6 @@ async def getWeather(city: Optional[str] = Form('Ithavaram')):
 
 @app.get('/getMarketDetails')
 async def getMarketDetails():
-  companies=['tata-motors-limited','jio-financial-services-ltd']
+  companies=['TSLA','AMZN','AAPL','MSFT']
   market_trends=getMarketTrends(companies)
   return {'success':True,'market_trends':market_trends}
