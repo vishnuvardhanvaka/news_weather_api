@@ -74,6 +74,7 @@ def getMarketTrends(companies):
 
 
 def getWeatherData(city):
+  city='-'.join(city.split(' '))
   headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
       'Referer': 'https://www.google.com/'
@@ -93,6 +94,9 @@ def getWeatherData(city):
       day,time=timeList[0].strip(),timeList[1].strip()
       all_details['day']=day
       all_details['time']=time
+
+      imgUrl = soup.find('img', attrs={'id': 'wob_tci'}).get('src')
+      all_details['imgUrl']='https:'+imgUrl
 
       temperature = soup.find('span', attrs={'id': 'wob_ttm'}).text.strip()+'°'+'C'
       all_details['temperature']=temperature
