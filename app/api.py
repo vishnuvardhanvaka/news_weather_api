@@ -74,38 +74,51 @@ def getMarketTrends(companies):
 
 
 def getWeatherData(city):
-  url = "https://www.google.com/search?q="+city+"-weather"
-  html = requests.get(url).content
-  soup = BeautifulSoup(html, 'html.parser')
-  Ftemp = soup.find('div', attrs={'class': 'BNeawe iBp4i AP7Wnd'}).text
-  temperature_fahrenheit = float(Ftemp.split('°')[0])
-  Ctemp=f'{math.ceil(((float(temperature_fahrenheit) - 32) * 5 / 9))}'+'°'+'C'
-  str = soup.find('div', attrs={'class': 'BNeawe tAd8D AP7Wnd'}).text
-  cityName = soup.find('span', attrs={'class': 'BNeawe tAd8D AP7Wnd'}).text.split(',')[0]
-  data = str.split('\n')
-  time = data[0]
-  sky = data[1]
-  listdiv = soup.findAll('div', attrs={'class': 'BNeawe s3v9rd AP7Wnd'})
-  strd = listdiv[5].text
-  pos = strd.find('Wind')
-  other_data = strd[pos:]
-#   print("City Name is", cityName)
-#   print("Temperature is", Ctemp)
-#   print("Time: ", time)
-#   print("Sky Description: ", sky)
-#   print(other_data)
-
-  weather_data={
-      'cityName':cityName,
-      'temperature':Ctemp,
-      'Time':time,
-      'skyDesc':sky,
-      'other_data':other_data
+  headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'Referer': 'https://www.google.com/'
   }
-  return weather_data
+  url = f"https://www.google.com/search?q={city}-weather-today"
+  # print(url)
+  response = requests.get(url, headers=headers)
+  all_details={}
+  if response.status_code == 200:
+      soup = BeautifulSoup(response.text, "html.parser")
+      
+      city_data = soup.find('div', attrs={'class': 'vk_sh vk_gy GlhITe'}).text.strip().split(',')
+      cityName,cityState,cityCountry=city_data[0].strip(),city_data[1].strip(),city_data[2].strip()
+      all_details['cityName']=cityName
+      all_details['cityState']=cityState
+      all_details['cityCountry']=cityCountry
 
-# city = "Itavaram"
-# weather_data=getWeatherData(city)
+      timeList = soup.find('div', attrs={'id': 'wob_dts'}).text.strip().split(' ')
+      day,time=timeList[0].strip(),timeList[1].strip()
+      all_details['day']=day
+      all_details['time']=time
+
+      temperature = soup.find('span', attrs={'id': 'wob_ttm'}).text.strip()+'°'+'C'
+      all_details['temperature']=temperature
+
+      skyDesc = soup.find('span', attrs={'id': 'wob_dc'}).text.strip()
+      all_details['skyDesc']=skyDesc
+
+      details_container = soup.find('div', attrs={'class': 'wtsRwe'})
+      list_of_details=details_container.find_all('div')
+      
+      Precipitation=list_of_details[0].text.split(': ')[1]
+      all_details['precipitation']=Precipitation
+      Humidity=list_of_details[1].text.split(': ')[1]
+      all_details['humidity']=Humidity
+      Wind=list_of_details[2].text.split('mph')[1]
+      all_details['wind']=Wind
+      
+      # print(all_details)
+      return all_details
+
+  else:
+    return all_details
+# city='Vijaywada'
+# weather_data=getCompleteWeather(city)
 # print(weather_data)
 
 
@@ -175,6 +188,7 @@ async def getLatestHeadlines():
 
 @app.post('/getWeather/')
 async def getWeather(city: Optional[str] = Form('Ithavaram')):
+  city='Vijaywada'
   latest_city_weahter=getWeatherData(city)
   return {'success':True,'weatherData':latest_city_weahter}
 
