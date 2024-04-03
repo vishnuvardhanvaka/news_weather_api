@@ -99,6 +99,9 @@ def getWeatherData(city):
       temperature = soup.find('span', attrs={'id': 'wob_ttm'}).text.strip()+'°'+'C'
       all_details['temperature']=temperature
 
+      fTemp = soup.find('span', attrs={'id': 'wob_tm'}).text.strip()+'°'+'F'
+      all_details['fTemp']=fTemp
+
       skyDesc = soup.find('span', attrs={'id': 'wob_dc'}).text.strip()
       all_details['skyDesc']=skyDesc
 
