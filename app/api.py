@@ -86,10 +86,8 @@ def getWeatherData(city):
       soup = BeautifulSoup(response.text, "html.parser")
       
       city_data = soup.find('div', attrs={'class': 'vk_sh vk_gy GlhITe'}).text.strip().split(',')
-      cityName,cityState,cityCountry=city_data[0].strip(),city_data[1].strip(),city_data[2].strip()
+      cityName=city_data[0].strip()
       all_details['cityName']=cityName
-      all_details['cityState']=cityState
-      all_details['cityCountry']=cityCountry
 
       timeList = soup.find('div', attrs={'id': 'wob_dts'}).text.strip().split(' ')
       day,time=timeList[0].strip(),timeList[1].strip()
