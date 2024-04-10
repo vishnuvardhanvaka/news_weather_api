@@ -13,6 +13,7 @@ origins = [
     "https://localhost.tiangolo.com",
     "http://localhost:3000",
     'https://infospherenews.vercel.app',
+    'https://infosphereweb.vercel.app',
     'https://ai-avatar-live-stream.vercel.app'
 ]
 
