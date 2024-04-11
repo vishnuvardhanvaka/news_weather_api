@@ -39,7 +39,7 @@ headers = {
 def getMarketTrends(companies):
   market_trends=[]
   for company in companies:
-    url = f"https://www.google.com/search?q={company} shares price today"
+    url = f"https://www.google.com/search?q={company}+shares+price+today"
     # print(url)
     # html = requests.get(url).content
     # soup = BeautifulSoup(html, 'html.parser')
