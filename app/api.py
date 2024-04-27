@@ -73,6 +73,34 @@ def getMarketTrends(companies):
         print("Failed to retrieve data. Status code:", response.status_code)
   return market_trends
 
+def getCryptNewsData():
+  cryptoUrl='https://crypto.news/news/'
+  response=requests.get(cryptoUrl)
+  soup=BeautifulSoup(response.text,'html.parser')
+  # print(soup)
+  allCrypto=soup.find(class_='alm-listing alm-ajax post-archive__items')
+  # print(allCrypto)
+  subCrypto=allCrypto.find_all(class_='post-loop')
+  # print(len(subCrypto))
+  crypto_data=[]
+  for crypto in subCrypto:
+    figure=crypto.find('figure')
+    img_url=figure.find('img').get('src')
+    heading=crypto.find(class_='post-loop__header').text.strip()
+    link=crypto.find('a').get('href')
+    time=crypto.find('time').text.strip()
+    r2=requests.get(link)
+    s2=BeautifulSoup(r2.text,'html.parser')
+    content_div=s2.find(class_='post-detail__content blocks')
+    data='\n'.join([content.text for content in content_div.find_all('p')])
+    # print(data)
+    crypto_data.append({
+        'heading':heading,
+        'time':time,
+        'imgUrl':img_url,
+        'content':data
+    })
+  return crypto_data
 
 def getWeatherData(city):
   city='-'.join(city.split(' '))
@@ -191,6 +219,11 @@ def getHeadlines():
 async def getLatestHeadlines():
   latest_news_headlines=getHeadlines()
   return {'success':True,'headlines':latest_news_headlines}
+
+@app.get('/getCryptNews')
+async def getCryptNews():
+  cryptoNews=getCryptNewsData()
+  return {'success':True,'cryptoNews':cryptoNews}
 
 @app.post('/getWeather/')
 async def getWeather(city: Optional[str] = Form('Vijaywada')):
