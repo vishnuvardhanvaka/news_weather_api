@@ -3,14 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
-import math
 import ast
+import google.generativeai as genai
+import requests
+from bs4 import BeautifulSoup
 
 
 origins = [
-    "http://localhost.tiangolo.com",
-    "https://localhost.tiangolo.com",
     "http://localhost:3000",
     'https://infospherenews.vercel.app',
     'https://infosphereweb.vercel.app',
@@ -26,15 +25,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/", tags=["Root"])
-async def read_root():
-    return {"message": "Welcome to this fantastic app!"}
-
-
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
     'Referer': 'https://www.google.com/'
 }
+
+genai.configure(api_key="AIzaSyCWna-D27sTjqf3IuIBgd_BD5ZFfvIfQrA")
+
+generation_config = {
+  "temperature": 0.9,
+  "top_p": 1,
+  "top_k": 1,
+  "max_output_tokens": 2048,
+}
+
+safety_settings = [
+  {
+    "category": "HARM_CATEGORY_HARASSMENT",
+    "threshold": "BLOCK_ONLY_HIGH"
+  },
+  {
+    "category": "HARM_CATEGORY_HATE_SPEECH",
+    "threshold": "BLOCK_ONLY_HIGH"
+  },
+  {
+    "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+    "threshold": "BLOCK_ONLY_HIGH"
+  },
+  {
+    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+    "threshold": "BLOCK_ONLY_HIGH"
+  },
+]
+model = genai.GenerativeModel(model_name="gemini-pro",
+                              generation_config=generation_config,
+                              safety_settings=safety_settings)
 
 def getMarketTrends(companies):
   market_trends=[]
@@ -214,6 +239,56 @@ def getHeadlines():
 # import json
 # prt=json.dumps(latest_news_headlines, indent=4)
 # print(prt)
+
+def scrap(typ):
+  urlS = 'https://www.prnewswire.com/news-releases/'+typ
+  response = requests.get(urlS)
+  soup = BeautifulSoup(response.content, 'html.parser')
+  links = []
+  for news_item in soup.find_all('a', class_='newsreleaseconsolidatelink display-outline w-100'):
+    links.append(news_item['href'])
+
+  root = 'https://www.prnewswire.com'
+  count = 1
+  newsDict = {}
+  for sub_link in links:
+    if count <= 15:
+      al = str(root+sub_link)
+      headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
+      res = requests.get(al, headers=headers)
+      doc = BeautifulSoup(res.content, 'html.parser')
+      head = doc.find('h1')
+      head = head.text.strip()
+      content = doc.find('div', class_='col-lg-10 col-lg-offset-1')
+      content = content.text.strip()
+      print("\n Headline: "+head+"\n Content: "+content+"\n")
+      newsDict[head]=content
+      prompt_parts = [
+            f"As an anchor for an English speaking news channel, present the news in about a minute long summary with the headline {head} and its content as {content}. Make sure to use only the neccessary details as a professional news anchor would do but also be as elaborative as possible. Word it as if you are speaking the result as an actual anchor and add some humanness to the result as well. Do not include any useless symbols, just the speech content.",
+            ]
+      response = model.generate_content(prompt_parts)
+      newsDict[head]= response.text
+      # print("\n PROMPT RES OF "+str(count)+" : \n")
+      # print(promtRes)
+      count = count + 1
+      break
+  return newsDict
+
+@app.get("/", tags=["Root"])
+async def read_root():
+    return {"message": "Welcome to this fantastic app!"}
+
+@app.get("/latest")
+async def index():
+   latest = 'news-releases-list/'
+   res = scrap(latest)
+   return res
+
+@app.get("/business")
+async def business():
+   bus_url = 'financial-services-latest-news/financial-services-latest-news-list/'
+   res = scrap(bus_url)
+   return res
 
 @app.get('/getLatestHeadlines')
 async def getLatestHeadlines():
