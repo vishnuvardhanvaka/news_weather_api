@@ -290,6 +290,48 @@ async def business():
    res = scrap(bus_url)
    return res
 
+@app.get("/entertainment")
+async def entertainment():
+   ent = 'entertainment-media-latest-news/entertainment-media-latest-news-list/'
+   res = scrap(ent)
+   return res
+
+@app.get("/sports")
+async def sports():
+   sp = 'sports-latest-news/sports-latest-news-list/'
+   res = scrap(sp)
+   return res
+
+@app.get("/health")
+async def health():
+   hl = 'health-latest-news/health-latest-news-list/'
+   res = scrap(hl)
+   return res
+
+@app.get("/technology")
+async def technology():
+   tech = 'consumer-technology-latest-news/consumer-technology-latest-news-list/'
+   res = scrap(tech)
+   return res
+
+@app.get("/science")
+async def science():
+   sci = 'energy-latest-news/energy-latest-news-list/'
+   res = scrap(sci)
+   return res
+
+@app.get("/environment")
+async def environment():
+   env = 'environment-latest-news/environment-latest-news-list/'
+   res = scrap(env)
+   return res
+
+@app.get("/crypto")
+async def crypto():
+   cry = 'financial-services-latest-news/cryptocurrency-list/'
+   res = scrap(cry)
+   return res
+
 @app.get('/getLatestHeadlines')
 async def getLatestHeadlines():
   latest_news_headlines=getHeadlines()
