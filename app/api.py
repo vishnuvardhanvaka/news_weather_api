@@ -264,7 +264,7 @@ def scrap(typ):
       print("\n Headline: "+head+"\n Content: "+content+"\n")
       newsDict[head]=content
       prompt_parts = [
-            f"As an anchor for an English speaking news channel, present the news in about a minute long summary with the headline {head} and its content as {content}. Make sure to use only the neccessary details as a professional news anchor would do but also be as elaborative as possible. Word it as if you are speaking the result as an actual anchor and add some humanness to the result as well. Do not include any useless symbols, just the speech content.",
+            f"As an anchor for an English speaking news channel, present the news in about a minute long summary with the short headline {head} and its content as {content}. Make sure to use only the neccessary details as a professional news anchor would do but also be as elaborative as possible. Word it as if you are speaking the result as an actual anchor and add some humanness to the result as well. Do not include any useless symbols, just the speech content.",
             ]
       response = model.generate_content(prompt_parts)
       newsDict[head]= response.text
