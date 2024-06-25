@@ -59,9 +59,12 @@ safety_settings = [
     "threshold": "BLOCK_ONLY_HIGH"
   },
 ]
-model = genai.GenerativeModel(model_name="gemini-pro",
+
+prompt = 'Respond like a news reporter for a english speaking news channel. Present the news in about a minute long summary when provided the headline and the content of the news article. Make sure to use only the neccessary details as a professional news anchor would do but also be as elaborative as possible. The output needs to be exactly as if you are speaking the result as an actual anchor and add some humanness to the result as well. Do not include any useless symbols, just the speech content for around one minute of reading time.'
+model = genai.GenerativeModel(model_name="gemini-1.5-pro",
                               generation_config=generation_config,
-                              safety_settings=safety_settings)
+                              safety_settings=safety_settings,
+                              system_instruction=prompt)
 
 class saveUrlRequest(BaseModel):
    url:str
@@ -294,9 +297,8 @@ def scrap(typ):
       content = content.text.strip()
       # print("\n Headline: "+head+"\n Content: "+content+"\n")
       newsDict[head]=content
-      prompt_parts = [
-            f"As an anchor for an English speaking news channel, present the news in about a minute long summary with the short headline {head} and its content as {content}. Make sure to use only the neccessary details as a professional news anchor would do but also be as elaborative as possible. Word it as if you are speaking the result as an actual anchor and add some humanness to the result as well. Do not include any useless symbols, just the speech content.",
-            ]
+      
+      prompt_parts= f'The heading of the news article is "{head}" and the content is: {content}.'
       response = model.generate_content(prompt_parts)
       newsDict[head]= response.text
       # print("\n PROMPT RES OF "+str(count)+" : \n")
