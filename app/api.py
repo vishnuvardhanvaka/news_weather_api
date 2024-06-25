@@ -1,4 +1,5 @@
 from fastapi import FastAPI,Form
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 import requests
@@ -7,6 +8,7 @@ import ast
 import google.generativeai as genai
 import requests
 from bs4 import BeautifulSoup
+from pymongo import MongoClient
 
 
 origins = [
@@ -60,6 +62,35 @@ safety_settings = [
 model = genai.GenerativeModel(model_name="gemini-pro",
                               generation_config=generation_config,
                               safety_settings=safety_settings)
+
+class saveUrlRequest(BaseModel):
+   url:str
+
+class Database:
+  def __init__(self):
+    connection_url='mongodb+srv://infospherecom:vishnu1$@infosphere.ijmwdnx.mongodb.net/'
+    client=MongoClient(connection_url)
+    self.database=client.infosphere
+    self.video_url_collection=self.database.videoUrlCollection
+    print('Successfully connected to the database !')
+  def save_video_url(self, url):
+    get_all_urls=list(self.video_url_collection.find())
+    if len(get_all_urls)>0:
+      self.video_url_collection.update_one({"_id": '667a9df2d66137540ffefb09'}, {"$set": {"url": url}})
+      return {'success': True, 'message': 'Url updated'}
+    else:
+      self.video_url_collection.insert_one({
+          'url':url
+      })
+    return {'success': True, 'message': 'Url saved successfully'}
+  def get_video_url(self):
+    video_url=list(self.video_url_collection.find())
+    if len(video_url)>0:
+      return {'status':True,'url':video_url[0]['url']}
+    else:
+      return {'status':False,'url':None}
+db=Database()
+
 
 def getMarketTrends(companies):
   market_trends=[]
@@ -252,7 +283,7 @@ def scrap(typ):
   count = 1
   newsDict = {}
   for sub_link in links:
-    if count <= 15:
+    if count <= 3:
       al = str(root+sub_link)
       headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
       res = requests.get(al, headers=headers)
@@ -261,7 +292,7 @@ def scrap(typ):
       head = head.text.strip()
       content = doc.find('div', class_='col-lg-10 col-lg-offset-1')
       content = content.text.strip()
-      print("\n Headline: "+head+"\n Content: "+content+"\n")
+      # print("\n Headline: "+head+"\n Content: "+content+"\n")
       newsDict[head]=content
       prompt_parts = [
             f"As an anchor for an English speaking news channel, present the news in about a minute long summary with the short headline {head} and its content as {content}. Make sure to use only the neccessary details as a professional news anchor would do but also be as elaborative as possible. Word it as if you are speaking the result as an actual anchor and add some humanness to the result as well. Do not include any useless symbols, just the speech content.",
@@ -353,3 +384,12 @@ async def getMarketDetails(companies: Optional[str] =Form("['TSLA','AMZN','AAPL'
   companies = ast.literal_eval(companies)
   market_trends=getMarketTrends(companies)
   return {'success':True,'market_trends':market_trends}
+
+@app.get('/getVideoUrl')
+async def get_video_url():
+   video_url=db.get_video_url()
+   return video_url
+@app.post('/saveVideoUrl')
+async def save_video_url(urlRequest:saveUrlRequest):
+   return db.save_video_url(urlRequest.url)
+   
