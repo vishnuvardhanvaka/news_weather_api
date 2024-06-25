@@ -32,7 +32,7 @@ headers = {
     'Referer': 'https://www.google.com/'
 }
 
-genai.configure(api_key="AIzaSyCWna-D27sTjqf3IuIBgd_BD5ZFfvIfQrA")
+genai.configure(api_key="AIzaSyBMlkKHti5RMk8_R12_oF72m-aV4EPH5fM")
 
 generation_config = {
   "temperature": 0.9,
