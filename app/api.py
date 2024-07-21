@@ -9,6 +9,10 @@ import google.generativeai as genai
 import requests
 from bs4 import BeautifulSoup
 from pymongo import MongoClient
+from bson import ObjectId
+import requests
+import json
+import ast
 
 
 origins = [
@@ -60,40 +64,99 @@ safety_settings = [
   },
 ]
 
-prompt = 'Respond like a news reporter for a english speaking news channel. Present the news in about a minute long summary when provided the headline and the content of the news article. Make sure to use only the neccessary details as a professional news anchor would do but also be as elaborative as possible. The output needs to be exactly as if you are speaking the result as an actual anchor and add some humanness to the result as well. Do not include any useless symbols, just the speech content for around one minute of reading time.'
+
+# prompt = '''Respond like a news reporter for a english speaking news channel. Present the news in about a minute long summary when provided the headline and the content of the news article. Make sure to use only the neccessary details as a professional news anchor would do but also be as elaborative as possible. The output needs to be exactly as if you are speaking the result as an actual anchor and add some humanness to the result as well. Do not include any useless symbols, just the speech content for around one minute of reading time. Respond as follows:
+# "subtitle":"showing very short main headline of article",
+# "content":"reading headline & detailed news of the article"
+# '''
+prompt='''Give me speech script for news channel in around 1 min, where i will give you the heading of the news article and the content of it.  Make sure to use only the neccessary details as a professional news anchor would do but also be as elaborative as possible. The output needs to be exactly as if you are speaking the result as an actual anchor and add some humanness to the result as well. Do not include any useless symbols, just the speech content for around one minute of reading time. Give very short 2 subtitles for it. Response as the very short subtitle that should be given and its corresponding news article content to read as dictionary as follows:
+Respond only in following way:
+{
+"subtitle_1":"showing very short in less of 5 words main headline of article",
+"content_1":"reading headline news of the article in short",
+"subtitle_2":"showing very short in less of 5 words topic name of news",
+"content_2":"reading detailed news of the article"
+}
+'''
+
 model = genai.GenerativeModel(model_name="gemini-1.5-pro",
                               generation_config=generation_config,
                               safety_settings=safety_settings,
                               system_instruction=prompt)
 
-class saveUrlRequest(BaseModel):
-   url:str
+class UpdateVideoRequest(BaseModel):
+  id: Optional[str] = None
+  new_id: Optional[str] = None
+  name: Optional[str] = None
+  download_url: Optional[str] = None
+  created_at: Optional[str] = None
+  generating: Optional[bool] = None
+  url: Optional[str] = None
+
 
 class Database:
   def __init__(self):
     connection_url='mongodb+srv://infospherecom:vishnu1$@infosphere.ijmwdnx.mongodb.net/'
     client=MongoClient(connection_url)
     self.database=client.infosphere
-    self.video_url_collection=self.database.videoUrlCollection
+    self.video_data_collection=self.database.videoData
+    self.video_object_id = ObjectId('669cff1dc1fd19f35d671c32')
     print('Successfully connected to the database !')
-  def save_video_url(self, url):
-    get_all_urls=list(self.video_url_collection.find())
-    if len(get_all_urls)>0:
-      self.video_url_collection.update_one({"_id": '667a9df2d66137540ffefb09'}, {"$set": {"url": url}})
-      return {'success': True, 'message': 'Url updated'}
-    else:
-      self.video_url_collection.insert_one({
-          'url':url
-      })
-    return {'success': True, 'message': 'Url saved successfully'}
-  def get_video_url(self):
-    video_url=list(self.video_url_collection.find())
-    if len(video_url)>0:
-      return {'status':True,'url':video_url[0]['url']}
-    else:
-      return {'status':False,'url':None}
-db=Database()
 
+  def get_video_data(self):
+    video_data=self.video_data_collection.find_one({"_id":self.video_object_id})
+    video_data.pop('_id')
+    return video_data
+
+  def update_video_data(self,new_video_data):
+    status= self.video_data_collection.update_one(
+        {"_id": self.video_object_id}, 
+        {"$set": new_video_data}
+        )
+    return {'success': True, 'message': 'Video data updated!'}
+
+class DeepBrain:
+  def __init__(self):
+    self.deepBrainToken=self.generate_token()
+    self.headers =  {
+        'Authorization': self.deepBrainToken,
+        'Content-Type': 'application/json'
+    }
+
+  def generate_token(self):
+    url = "https://app.deepbrain.io/api/odin/v3/auth/token"
+    body = {
+      "appId": "studiov3.Chris@dna.fund",
+      "userKey": "e8f401b5-a4bd-4522-a9e1-43edb7c28e80"
+    }
+    headers = {
+      "Content-Type": "application/json"
+    }
+    r = requests.post(url, data=json.dumps(body), headers=headers)
+    return r.json()['data']['token']
+
+  def get_video_data(self,project_id):
+    url = 'https://app.deepbrain.io/api/odin/v3/editor/project/' + project_id
+    return requests.get(url,headers=self.headers).json()['data']['project']
+
+  def generate_video(self,video_data):
+    url = 'https://app.deepbrain.io/api/odin/v3/editor/project'
+    response = requests.post(url, data=json.dumps(video_data), headers=self.headers).json()
+    db.update_video_data({
+        "new_id":response['data']['projectId'],
+        "generating":True
+    })
+    return response
+  def get_all_projects(self):
+    url = "https://app.deepbrain.io/api/odin/v3/editor/project"
+    return requests.get(url, headers=self.headers).json()
+
+  def retrieve_models(self):
+    url = 'https://app.deepbrain.io/api/odin/v3/dropdown/models'
+    return requests.get(url, headers=self.headers).json()
+
+db=Database()
+deepBrain=DeepBrain()
 
 def getMarketTrends(companies):
   market_trends=[]
@@ -284,7 +347,7 @@ def scrap(typ):
 
   root = 'https://www.prnewswire.com'
   count = 1
-  newsDict = {}
+  news_data = []
   for sub_link in links:
     if count <= 3:
       al = str(root+sub_link)
@@ -295,17 +358,14 @@ def scrap(typ):
       head = head.text.strip()
       content = doc.find('div', class_='col-lg-10 col-lg-offset-1')
       content = content.text.strip()
-      # print("\n Headline: "+head+"\n Content: "+content+"\n")
-      newsDict[head]=content
-      
+
       prompt_parts= f'The heading of the news article is "{head}" and the content is: {content}.'
       response = model.generate_content(prompt_parts)
-      newsDict[head]= response.text
-      # print("\n PROMPT RES OF "+str(count)+" : \n")
-      # print(promtRes)
+      print(response.text)
+      news_data.append(ast.literal_eval(response.text))
       count = count + 1
       break
-  return newsDict
+  return news_data
 
 @app.get("/", tags=["Root"])
 async def read_root():
@@ -387,11 +447,27 @@ async def getMarketDetails(companies: Optional[str] =Form("['TSLA','AMZN','AAPL'
   market_trends=getMarketTrends(companies)
   return {'success':True,'market_trends':market_trends}
 
-@app.get('/getVideoUrl')
-async def get_video_url():
-   video_url=db.get_video_url()
-   return video_url
-@app.post('/saveVideoUrl')
-async def save_video_url(urlRequest:saveUrlRequest):
-   return db.save_video_url(urlRequest.url)
+@app.get('/getVideoData')
+async def get_video_data():
+   video_data=db.get_video_data()
+   if video_data['generating']:
+    new_video_data=deepBrain.get_video_data(video_data['new_id'])
+    if new_video_data['progress']==100:
+      video_data={
+        'id':new_video_data['_id'],
+        'name':new_video_data['name'],
+        'download_url':new_video_data['download_url'],
+        'created_at':new_video_data['createdAt'],
+        'new_id':"",
+        'generating':False
+      }
+      # print('updating the video data ...')
+      db.update_video_data(video_data)
+   return  video_data
+
+@app.post('/updateVideoData')
+async def update_video_data(urlRequest:UpdateVideoRequest):
+  update_data={key[0]:key[1] for key in urlRequest if key[1]!=None}
+  status=db.update_video_data(update_data)
+  return {'status':True,'msg':'successfully updated the video data'}
    
