@@ -142,10 +142,11 @@ class DeepBrain:
   def generate_video(self,video_data):
     url = 'https://app.deepbrain.io/api/odin/v3/editor/project'
     response = requests.post(url, data=json.dumps(video_data), headers=self.headers).json()
-    db.update_video_data({
-        "new_id":response['data']['projectId'],
-        "generating":True
-    })
+    if response['success']:
+      db.update_video_data({
+          "new_id":response['data']['projectId'],
+          "generating":True
+      })
     return response
   def get_all_projects(self):
     url = "https://app.deepbrain.io/api/odin/v3/editor/project"
