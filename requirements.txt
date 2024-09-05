@@ -14,3 +14,4 @@ pymongo
 python-multipart
 typing_extensions
 pymongo
+cloudscraper

@@ -1,25 +1,23 @@
-from fastapi import FastAPI,Form
-from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
-from typing import Optional
-import requests
-from bs4 import BeautifulSoup
 import ast
-import google.generativeai as genai
-import requests
-from bs4 import BeautifulSoup
-from pymongo import MongoClient
-from bson import ObjectId
-import requests
 import json
-import ast
+import requests
+import cloudscraper
+from bson import ObjectId
+from typing import Optional
+from bs4 import BeautifulSoup
+from pydantic import BaseModel
+from pymongo import MongoClient
+from fastapi import FastAPI,Form
+import google.generativeai as genai
+from fastapi.middleware.cors import CORSMiddleware
 
 
 origins = [
     "http://localhost:3000",
     'https://infospherenews.vercel.app',
     'https://infosphereweb.vercel.app',
-    'https://ai-avatar-live-stream.vercel.app'
+    'https://ai-avatar-live-stream.vercel.app',
+    '*'
 ]
 
 app=FastAPI()
@@ -158,6 +156,61 @@ class DeepBrain:
 
 db=Database()
 deepBrain=DeepBrain()
+
+#crypto news
+cointelegraphNewsUrls={
+    'depin':'https://cointelegraph.com/tags/depin',
+    'ai':'https://cointelegraph.com/tags/ai',
+    'web3':'https://cointelegraph.com/tags/web3',
+    'cryptocurrency':'https://cointelegraph.com/tags/cryptocurrency',
+    # 'https://cointelegraph.com/tags/bitcoin',
+    # 'https://cointelegraph.com/tags/ethereum',
+    # 'https://cointelegraph.com/tags/blockchain',
+}
+
+class SCRAPE():
+  def getSoup(self,url):
+    scraper = cloudscraper.create_scraper()
+    response = scraper.get(url)
+    html_content = response.content
+    soup = BeautifulSoup(html_content, 'html.parser')
+    return soup
+
+class CRYPTO(SCRAPE):
+  def __init__(self):
+    super().__init__()
+  def getcointelegraphNews(self,url):
+    print('Getting AI crypto news...')
+    news=[]
+    soup=self.getSoup(url)
+    # print(soup.prettify())
+    articles = soup.find_all('li', {'data-testid': 'posts-listing__item'})
+    for article in articles:
+        link = article.find('a', class_='post-card-inline__figure-link')['href']
+        full_link = f"https://cointelegraph.com{link}"
+        title = article.find('span', class_='post-card-inline__title').text.strip()
+        date = article.find('time', class_='post-card-inline__date').text.strip()
+        author = article.find('p', class_='post-card-inline__author').find('a').text.strip()
+        description = article.find('p', class_='post-card-inline__text').text.strip()
+        article_soup = self.getSoup(full_link)
+        content = article_soup.find('div', class_='post-content').text.strip()
+        img = article_soup.find('img', class_='lazy-image__img type:primaryImage')['src']
+
+        data={
+            'title':title,
+            'link':full_link,
+            'img':img,
+            'date':date,
+            'author':author,
+            'description':description,
+            'content':content
+        }
+        news.append(data)
+    return news
+
+scraper=SCRAPE()
+cryptoScraper=CRYPTO()
+
 
 def getMarketTrends(companies):
   market_trends=[]
@@ -431,10 +484,30 @@ async def getLatestHeadlines():
   latest_news_headlines=getHeadlines()
   return {'success':True,'headlines':latest_news_headlines}
 
-@app.get('/getCryptNews')
+@app.get('/getCryptoNews')
 async def getCryptNews():
   cryptoNews=getCryptNewsData()
   return {'success':True,'cryptoNews':cryptoNews}
+
+@app.get('/getAICryptoNews')
+async def getAINews():
+  cointelegraphAINews=cryptoScraper.getcointelegraphNews(cointelegraphNewsUrls['ai'])
+  return {'success':True,'cryptoNews':cointelegraphAINews}
+
+@app.get('/getDepinNews')
+async def getDepinNews():
+  cointelegraphDepinNews=cryptoScraper.getcointelegraphNews(cointelegraphNewsUrls['depin'])
+  return {'success':True,'cryptoNews':cointelegraphDepinNews}
+
+@app.get('/getWeb3News')
+async def getWeb3News():
+  cointelegraphWeb3News=cryptoScraper.getcointelegraphNews(cointelegraphNewsUrls['web3'])
+  return {'success':True,'cryptoNews':cointelegraphWeb3News}
+
+@app.get('/getCryptoCurrencyNews')
+async def getCryptoCurrencyNews():
+  cointelegraphCryptoCurrencyNews=cryptoScraper.getcointelegraphNews(cointelegraphNewsUrls['cryptocurrency'])
+  return {'success':True,'cryptoNews':cointelegraphCryptoCurrencyNews}
 
 @app.post('/getWeather/')
 async def getWeather(city: Optional[str] = Form('Vijaywada')):
